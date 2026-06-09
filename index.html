@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>智招协同工作台</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header id="topbar" class="topbar hidden">
+      <div class="topbar-left">
+        <div class="brand-mark">智招</div>
+        <div class="brand-copy">
+          <h1>智招协同工作台</h1>
+          <div id="greeting" class="greeting"></div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div id="userStatus" class="user-status hidden"></div>
+        <button id="notificationBtn" class="icon-btn" type="button" title="消息中心" aria-label="消息中心">
+          <span class="icon-symbol">消息</span>
+          <span id="notificationBadge" class="notification-badge hidden">0</span>
+        </button>
+        <button id="switchAccountBtn" class="secondary-button" type="button" title="切换账号">切换账号</button>
+        <button id="logoutButton" class="secondary-button" type="button">退出登录</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="loginSection" class="login-shell">
+        <div class="login-layout">
+          <div class="login-visual">
+            <div class="eyebrow">招生协同管理平台</div>
+            <h2>让团队、线索、学校与数据在一个页面里高效协作</h2>
+            <p>支持工作台总览、消息提醒、招生线索管理、学校对接关系维护和多角色协同操作，自动适配手机端与桌面端。</p>
+            <div class="feature-list">
+              <div class="feature-item">
+                <strong>全流程可视化</strong>
+                <span>从初次咨询到报名转化，统一记录与追踪。</span>
+              </div>
+              <div class="feature-item">
+                <strong>多角色协同</strong>
+                <span>支持超级管理员、团队负责人、招生老师不同权限。</span>
+              </div>
+              <div class="feature-item">
+                <strong>消息与待办联动</strong>
+                <span>未读提醒、重点线索与当日任务一屏查看。</span>
+              </div>
+            </div>
+            <div class="metric-strip">
+              <div class="metric-card-mini">
+                <span>线索管理</span>
+                <strong>实时跟进</strong>
+              </div>
+              <div class="metric-card-mini">
+                <span>数据看板</span>
+                <strong>转化清晰</strong>
+              </div>
+              <div class="metric-card-mini">
+                <span>移动适配</span>
+                <strong>自动响应</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="login-card">
+            <div class="login-brand">
+              <div class="login-logo">招</div>
+              <div>
+                <h2>欢迎登录</h2>
+                <p>请输入演示账号密码，快速进入中文化重构后的招生工作台。</p>
+              </div>
+            </div>
+
+            <form id="loginForm" class="login-form">
+              <label>
+                <span>账号</span>
+                <input type="text" id="username" autocomplete="username" placeholder="请输入账号" required />
+              </label>
+              <label>
+                <span>密码</span>
+                <input type="password" id="password" autocomplete="current-password" placeholder="请输入密码" required />
+              </label>
+              <button type="submit" class="primary-button login-submit">登录系统</button>
+            </form>
+
+            <div class="login-hint">
+              <div class="login-hint-title">演示账号</div>
+              <div class="demo-account-grid">
+                <button type="button" class="demo-account" data-demo-user="superadmin" data-demo-password="team2026">超级管理员</button>
+                <button type="button" class="demo-account" data-demo-user="lead_green" data-demo-password="team2026">团队负责人</button>
+                <button type="button" class="demo-account" data-demo-user="member_lina" data-demo-password="team2026">招生老师</button>
+              </div>
+              <p>统一密码：<strong>team2026</strong></p>
+            </div>
+
+            <div class="login-alternatives">
+              <button id="demoWechatBtn" type="button" class="secondary-button wechat-button">微信快捷填充</button>
+              <button id="demoSmsBtn" type="button" class="outline-button">短信登录演示</button>
+            </div>
+
+            <div class="login-footer">
+              <span>其他入口</span>
+              <div class="login-links">
+                <a id="forgotPasswordLink" href="#">忘记密码</a>
+                <a id="registerLink" href="#">申请开通</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboard" class="dashboard hidden">
+        <aside id="dashboardSidebar" class="dashboard-sidebar">
+          <div class="sidebar-card">
+            <div class="sidebar-badge">智能招生中枢</div>
+            <h2>统一管理团队、线索、学校与数据进度</h2>
+            <p>系统会根据屏幕尺寸自动切换为桌面布局或移动布局，页面内容会跟随设备宽度自适应展示。</p>
+            <div class="sidebar-meta">
+              <div class="sidebar-meta-item">
+                <span>当前设备</span>
+                <strong id="deviceStatus">检测中</strong>
+              </div>
+              <div class="sidebar-meta-item">
+                <span>当前视图</span>
+                <strong id="currentSectionLabel">工作台</strong>
+              </div>
+            </div>
+            <button id="navToggleBtn" class="outline-button nav-toggle" type="button" aria-expanded="false">展开功能导航</button>
+          </div>
+          <nav class="tabs" id="sectionTabs" aria-label="功能导航"></nav>
+        </aside>
+
+        <div class="dashboard-main">
+          <section class="workspace-summary">
+            <div>
+              <span class="workspace-kicker">当前工作区域</span>
+              <h2 id="workspaceTitle">工作台</h2>
+              <p id="workspaceHint">查看总览、待办事项、关键提醒与团队近期进展。</p>
+            </div>
+            <div class="workspace-tips">
+              <span class="status-pill status-primary">简体中文界面</span>
+              <span class="status-pill status-success">响应式自适应</span>
+            </div>
+          </section>
+          <div id="sectionContent"></div>
+        </div>
+      </section>
+    </main>
+
+    <div id="notificationModal" class="modal-overlay hidden">
+      <div class="modal-card notification-modal">
+        <div class="modal-header">
+          <div>
+            <h2>消息中心</h2>
+            <p class="modal-subtitle">查看系统通知、团队消息和家长回复，支持按分类批量标记已读。</p>
+          </div>
+          <button class="close-btn" id="closeNotification" type="button" aria-label="关闭消息中心">&times;</button>
+        </div>
+        <div class="notification-tabs">
+          <button class="tab-btn active" data-tab="system" type="button">系统通知</button>
+          <button class="tab-btn" data-tab="team" type="button">团队消息</button>
+          <button class="tab-btn" data-tab="parent" type="button">家长回复</button>
+        </div>
+        <div class="notification-toolbar">
+          <p id="notificationSummary">当前分类消息一览</p>
+          <button id="markAllNotificationsBtn" class="outline-button" type="button">当前分类全部已读</button>
+        </div>
+        <div class="notification-list" id="notificationList"></div>
+      </div>
+    </div>
+
+    <div id="modalContainer"></div>
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
