@@ -26,6 +26,7 @@ const toastContainer = document.getElementById('toastContainer');
 const loginForm = document.getElementById('loginForm');
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
+const leadImportInput = document.getElementById('leadImportInput');
 const demoWechatBtn = document.getElementById('demoWechatBtn');
 const demoSmsBtn = document.getElementById('demoSmsBtn');
 const forgotPasswordLink = document.getElementById('forgotPasswordLink');
@@ -63,6 +64,21 @@ const roleLabels = {
   super: '超级管理员',
   lead: '团队负责人',
   member: '招生老师',
+};
+
+const leadImportColumnAliases = {
+  name: ['学生姓名', '姓名', '学生', 'studentname', 'student', 'name'],
+  grade: ['年级', '班级', '年级班级', 'grade', 'classname', 'class'],
+  parent: ['家长姓名', '家长', '家长称呼', 'parent', 'parentname', 'guardian'],
+  phone: ['家长电话', '联系电话', '手机号', '手机号码', '电话', 'phone', 'mobile', 'tel'],
+  followUp: ['跟进内容', '跟进记录', '备注', '说明', 'followup', 'comment', 'remark', 'notes'],
+  assignedTeacher: ['负责人', '招生老师', '跟进老师', '老师', 'assignedteacher', 'teacher', 'owner'],
+  assignedTeacherId: ['负责人id', '招生老师id', '老师id', 'assignedteacherid', 'teacherid', 'ownerid'],
+  enrollmentStatus: ['报名状态', '线索状态', '状态', 'enrollmentstatus', 'status'],
+  priority: ['优先级', 'priority', 'level'],
+  teamId: ['所属分组', '分组', '团队编号', 'teamid', 'team'],
+  called: ['联系状态', '是否联系', '已联系', 'called', 'contacted'],
+  lastContactTime: ['最近联系', '最近联系时间', '最后联系时间', 'lastcontacttime', 'contacttime'],
 };
 
 const demoTextMap = {
@@ -177,6 +193,14 @@ function normalizeSearchText(value) {
   return String(value ?? '').trim().toLowerCase();
 }
 
+function normalizeColumnKey(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_\-]+/g, '')
+    .replace(/[()（）【】\[\].:：]/g, '');
+}
+
 function includesKeyword(values, keyword) {
   if (!keyword) return true;
   const normalizedKeyword = normalizeSearchText(keyword);
@@ -198,6 +222,49 @@ function isDuplicateText(values, candidate, currentId, normalizer = normalizeSea
   const target = normalizer(candidate);
   if (!target) return false;
   return values.some(item => item.id !== currentId && normalizer(item.value) === target);
+}
+
+function getImportCell(row, aliases) {
+  const entries = Object.entries(row || {});
+  const aliasSet = new Set((aliases || []).map(normalizeColumnKey));
+  for (const [key, value] of entries) {
+    if (aliasSet.has(normalizeColumnKey(key))) {
+      return String(value ?? '').trim();
+    }
+  }
+  return '';
+}
+
+function isImportRowEmpty(row) {
+  return !Object.values(row || {}).some(value => String(value ?? '').trim());
+}
+
+function parseImportedBoolean(value, fallback = false) {
+  const text = normalizeSearchText(value);
+  if (!text) return fallback;
+  if (['是', '已联系', 'true', '1', 'yes', 'y'].includes(text)) return true;
+  if (['否', '未联系', 'false', '0', 'no', 'n'].includes(text)) return false;
+  return fallback;
+}
+
+function parseImportedTeamId(value, data) {
+  const text = localizeDemoText(String(value ?? '').trim());
+  if (!text) return null;
+  const digitMatch = text.match(/\d+/);
+  if (digitMatch) return Number(digitMatch[0]);
+
+  const normalized = normalizeSearchText(text);
+  const matchedTeam = data.team.find(team => {
+    return normalizeSearchText(team.schoolName) === normalized
+      || normalizeSearchText(getTeamLabel(team.teamId, data)) === normalized;
+  });
+  return matchedTeam ? matchedTeam.teamId : null;
+}
+
+function getImportSummaryMessage(summary) {
+  const head = `成功新增 ${summary.created} 条，更新 ${summary.updated} 条，跳过 ${summary.skipped} 条。`;
+  if (!summary.errors.length) return head;
+  return `${head} 问题明细：${summary.errors.slice(0, 5).join('；')}${summary.errors.length > 5 ? '；其余问题请检查原始表格后重试。' : ''}`;
 }
 
 function mapEnrollmentStatus(value) {
@@ -993,6 +1060,7 @@ function renderLeadsSection(user, data) {
 
   const body = `
     <div class="filter-bar">
+      <div class="import-tip">支持一键导入 .xlsx / .xls / .csv，至少包含“学生姓名”和“家长电话”，重复线索会自动更新。</div>
       <input class="search-input" type="search" placeholder="搜索学生、家长、负责人或跟进内容" value="${escapeHTML(uiState.filters.leadSearch)}" data-filter-section="leads" data-filter-key="leadSearch" />
       <select data-filter-section="leads" data-filter-key="leadStatus">
         <option value="all"${uiState.filters.leadStatus === 'all' ? ' selected' : ''}>全部状态</option>
@@ -1049,7 +1117,11 @@ function renderLeadsSection(user, data) {
   return renderSectionLayout({
     title: '线索跟进',
     description: '管理家长咨询、联系记录、优先级和报名状态，提升跟进效率。',
-    actions: '<button type="button" class="primary-button" data-add-lead="true">新增线索</button>',
+    actions: `
+      <button type="button" class="outline-button" data-show-lead-import-help="true">导入说明</button>
+      <button type="button" class="secondary-button" data-import-leads="true">一键导入 Excel</button>
+      <button type="button" class="primary-button" data-add-lead="true">新增线索</button>
+    `,
     stats,
     body,
   });
@@ -1462,6 +1534,219 @@ function showConfirm({ title, description, confirmText = '确认操作', cancelT
     document.addEventListener('keydown', onKeydown);
     modalContainer.appendChild(overlay);
   });
+}
+
+function showLeadImportGuide() {
+  showNotice(
+    '线索导入说明',
+    '支持导入 .xlsx、.xls、.csv。表头至少包含“学生姓名”和“家长电话”，可选列包含：年级/班级、家长姓名、负责人、负责人ID、所属分组、报名状态、优先级、跟进内容、联系状态、最近联系。系统会按“学生姓名 + 家长电话”自动识别重复线索并更新。'
+  );
+}
+
+function resolveImportedLeadOwnership(row, user, data) {
+  const editableTeams = getEditableTeams(user, data);
+  const assignableMembers = getAssignableMembers(user, data);
+  const currentMember = data.members.find(member => member.id === user?.memberId);
+
+  if (!editableTeams.length || !assignableMembers.length) {
+    return { error: '当前账号没有可用的分组或负责人，无法导入。' };
+  }
+
+  if (isTeamMember(user)) {
+    if (!currentMember) return { error: '当前账号未关联成员信息，无法导入。' };
+    return { teamId: currentMember.teamId, teacher: currentMember };
+  }
+
+  const importedTeamId = parseImportedTeamId(getImportCell(row, leadImportColumnAliases.teamId), data);
+  const importedTeacherId = Number(getImportCell(row, leadImportColumnAliases.assignedTeacherId));
+  const importedTeacherName = normalizeSearchText(localizeDemoText(getImportCell(row, leadImportColumnAliases.assignedTeacher)));
+
+  let teacher = null;
+  if (Number.isFinite(importedTeacherId) && importedTeacherId > 0) {
+    teacher = assignableMembers.find(member => member.id === importedTeacherId) || null;
+  }
+  if (!teacher && importedTeacherName) {
+    teacher = assignableMembers.find(member => normalizeSearchText(member.name) === importedTeacherName) || null;
+  }
+
+  let teamId = importedTeamId;
+  if (!teamId && teacher) teamId = teacher.teamId;
+  if (!teamId) teamId = editableTeams[0]?.teamId || null;
+
+  if (!editableTeams.some(team => team.teamId === teamId)) {
+    return { error: '导入的所属分组超出当前账号可操作范围。' };
+  }
+
+  if (!teacher) {
+    teacher = assignableMembers.find(member => member.teamId === teamId) || assignableMembers[0] || null;
+  }
+  if (!teacher) {
+    return { error: '没有找到可用负责人，请先维护团队成员。' };
+  }
+  if (teacher.teamId !== teamId) {
+    return { error: `负责人“${teacher.name}”与所属分组不一致。` };
+  }
+
+  return { teamId, teacher };
+}
+
+function importLeadRows(rows, fileName = '') {
+  const user = getCurrentUser();
+  const data = getData();
+  const summary = {
+    created: 0,
+    updated: 0,
+    skipped: 0,
+    errors: [],
+  };
+
+  rows.forEach((row, index) => {
+    const rowNumber = index + 2;
+    if (isImportRowEmpty(row)) return;
+
+    const name = localizeDemoText(getImportCell(row, leadImportColumnAliases.name));
+    const phone = normalizePhone(getImportCell(row, leadImportColumnAliases.phone));
+    const grade = localizeDemoText(getImportCell(row, leadImportColumnAliases.grade));
+    const parent = localizeDemoText(getImportCell(row, leadImportColumnAliases.parent));
+    const followUp = localizeDemoText(getImportCell(row, leadImportColumnAliases.followUp));
+    const enrollmentStatus = getImportCell(row, leadImportColumnAliases.enrollmentStatus);
+    const priority = getImportCell(row, leadImportColumnAliases.priority);
+    const calledValue = getImportCell(row, leadImportColumnAliases.called);
+    const lastContactTime = getImportCell(row, leadImportColumnAliases.lastContactTime);
+
+    if (!name || !phone) {
+      summary.skipped += 1;
+      summary.errors.push(`第 ${rowNumber} 行缺少学生姓名或家长电话`);
+      return;
+    }
+    if (!isValidPhone(phone)) {
+      summary.skipped += 1;
+      summary.errors.push(`第 ${rowNumber} 行家长电话格式无效`);
+      return;
+    }
+
+    const ownership = resolveImportedLeadOwnership(row, user, data);
+    if (ownership.error) {
+      summary.skipped += 1;
+      summary.errors.push(`第 ${rowNumber} 行：${ownership.error}`);
+      return;
+    }
+
+    const payload = {
+      name,
+      grade: grade || '待定',
+      parent: parent || '家长',
+      phone,
+      followUp: followUp || '待补充跟进内容',
+      assignedTeacherId: ownership.teacher.id,
+      assignedTeacher: ownership.teacher.name,
+      enrollmentStatus: mapEnrollmentStatus(enrollmentStatus || '待跟进'),
+      teamId: ownership.teamId,
+      priority: mapPriority(priority || '中'),
+      called: parseImportedBoolean(calledValue, false),
+      lastContactTime: String(lastContactTime || '').trim(),
+    };
+
+    const existing = data.leadStudents.find(item => {
+      return normalizeSearchText(item.name) === normalizeSearchText(name)
+        && normalizePhone(item.phone) === phone;
+    });
+
+    if (existing) {
+      existing.name = payload.name;
+      existing.grade = payload.grade || existing.grade;
+      existing.parent = payload.parent || existing.parent;
+      existing.phone = payload.phone;
+      existing.followUp = payload.followUp || existing.followUp;
+      existing.assignedTeacherId = payload.assignedTeacherId;
+      existing.assignedTeacher = payload.assignedTeacher;
+      existing.enrollmentStatus = payload.enrollmentStatus || existing.enrollmentStatus;
+      existing.teamId = payload.teamId || existing.teamId;
+      existing.priority = payload.priority || existing.priority;
+      existing.called = payload.called;
+      existing.lastContactTime = payload.lastContactTime || existing.lastContactTime;
+      summary.updated += 1;
+      return;
+    }
+
+    data.leadStudents.push({
+      id: generateId(),
+      name: payload.name,
+      grade: payload.grade,
+      parent: payload.parent,
+      phone: payload.phone,
+      called: payload.called,
+      followUp: payload.followUp,
+      assignedTeacher: payload.assignedTeacher,
+      assignedTeacherId: payload.assignedTeacherId,
+      enrollmentStatus: payload.enrollmentStatus,
+      teamId: payload.teamId,
+      priority: payload.priority,
+      lastContactTime: payload.lastContactTime,
+    });
+    summary.created += 1;
+  });
+
+  if (summary.created || summary.updated) {
+    saveData(data);
+    refreshCurrentSection();
+  }
+
+  if (!summary.created && !summary.updated && !summary.skipped) {
+    summary.errors.push(`文件“${fileName || '当前文件'}”中没有识别到可导入的数据行`);
+  }
+
+  return summary;
+}
+
+function triggerLeadImport() {
+  if (!leadImportInput) {
+    showToast('未找到导入控件，请刷新页面后重试。', 'error');
+    return;
+  }
+  if (!window.XLSX) {
+    showToast('Excel 解析组件未加载完成，请检查网络后刷新页面。', 'error');
+    return;
+  }
+  leadImportInput.value = '';
+  leadImportInput.click();
+}
+
+async function handleLeadImportFileChange(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  if (!window.XLSX) {
+    showToast('Excel 解析组件未加载完成，请检查网络后重试。', 'error');
+    event.target.value = '';
+    return;
+  }
+
+  try {
+    const workbook = window.XLSX.read(await file.arrayBuffer(), { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    if (!worksheet) {
+      showToast('导入失败：未读取到有效工作表。', 'error');
+      return;
+    }
+
+    const rows = window.XLSX.utils.sheet_to_json(worksheet, {
+      defval: '',
+      raw: false,
+    });
+    const summary = importLeadRows(rows, file.name);
+    if (summary.created || summary.updated) {
+      showToast(`导入完成：新增 ${summary.created} 条，更新 ${summary.updated} 条。`, 'success');
+    } else {
+      showToast('未导入任何线索，请检查表头与数据内容。', 'error');
+    }
+    showNotice('线索导入结果', getImportSummaryMessage(summary));
+  } catch (error) {
+    showToast('Excel 导入失败，请确认文件格式是否正确。', 'error');
+  } finally {
+    event.target.value = '';
+  }
 }
 
 function showTeamForm(id) {
@@ -2141,6 +2426,8 @@ function handleSectionClick(event) {
   if (button.dataset.addSchool !== undefined) return showSchoolForm();
   if (button.dataset.editSchool) return showSchoolForm(Number(button.dataset.editSchool));
   if (button.dataset.deleteSchool) return deleteSchool(Number(button.dataset.deleteSchool));
+  if (button.dataset.showLeadImportHelp !== undefined) return showLeadImportGuide();
+  if (button.dataset.importLeads !== undefined) return triggerLeadImport();
   if (button.dataset.addLead !== undefined) return showLeadForm();
   if (button.dataset.editLead) return showLeadForm(Number(button.dataset.editLead));
   if (button.dataset.callLead) return markLeadCalled(Number(button.dataset.callLead));
@@ -2197,6 +2484,7 @@ function init() {
   sectionContent?.addEventListener('click', handleSectionClick);
   sectionContent?.addEventListener('input', handleFilterInput);
   sectionContent?.addEventListener('change', handleFilterInput);
+  leadImportInput?.addEventListener('change', handleLeadImportFileChange);
   navToggleBtn?.addEventListener('click', () => {
     if (!dashboard) return;
     if (window.innerWidth > 1180) {
