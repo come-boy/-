@@ -63,6 +63,23 @@
                 <strong>自动响应</strong>
               </div>
             </div>
+
+            <div class="permission-card">
+              <div class="permission-title">权限与功能说明</div>
+              <div class="permission-body">
+                <p>获取通话记录权限，用于拨打统计的数据获取拨打电话权限，用于软件拨打电话。获取通话状态和移动网络信息权限，用于监听通话状态进行上传统计数据。</p>
+                <ul>
+                  <li>号码导入：支持文本、图片、微信多种导入，支持复制粘贴、智能拍照识别、文件导入等，多种方式批量导入电话号码。</li>
+                  <li>智能标记：对打过的电话进行分类处理，拨号后备注标记、添加客户，方便管理资料。</li>
+                  <li>客户管理：对目标客户进行有效管理，支持自添加、标记、备注、记录跟进情况，记录每一个细节。</li>
+                  <li>收藏：表示可有意向，点击收藏后可对此号进行设置昵称、添加备注等操作。</li>
+                  <li>加微：表示要将此号码添加为微信好友，加微信后软件会将此号码复制并跳转到微信。</li>
+                  <li>保留：表示此号码还需再次拨打，点击为保留后此号码仍然保留在线索列表中。</li>
+                  <li>自动拨号：全自动式拨打电话，无需人工操作，省时省力。</li>
+                  <li>无缝连接：通过电脑与手机的无缝连接，实现一键拨号，帮助用户将电话号码从电脑发送至手机拨出。</li>
+                </ul>
+              </div>
+            </div>
           </div>
 
           <div class="login-card">
@@ -70,14 +87,14 @@
               <div class="login-logo">招</div>
               <div>
                 <h2>欢迎登录</h2>
-                <p>请输入演示账号密码，快速进入中文化重构后的招生工作台。</p>
+                <p>请输入账号与密码登录系统。首次使用请先完成注册。</p>
               </div>
             </div>
 
             <form id="loginForm" class="login-form">
               <label>
-                <span>账号</span>
-                <input type="text" id="username" autocomplete="username" placeholder="请输入账号" required />
+                <span>账号/手机号</span>
+                <input type="text" id="username" autocomplete="username" placeholder="请输入账号或手机号" required />
               </label>
               <label>
                 <span>密码</span>
@@ -86,26 +103,11 @@
               <button type="submit" class="primary-button login-submit">登录系统</button>
             </form>
 
-            <div class="login-hint">
-              <div class="login-hint-title">演示账号</div>
-              <div class="demo-account-grid">
-                <button type="button" class="demo-account" data-demo-user="superadmin" data-demo-password="team2026">超级管理员</button>
-                <button type="button" class="demo-account" data-demo-user="lead_green" data-demo-password="team2026">团队负责人</button>
-                <button type="button" class="demo-account" data-demo-user="member_lina" data-demo-password="team2026">招生老师</button>
-              </div>
-              <p>统一密码：<strong>team2026</strong></p>
-            </div>
-
-            <div class="login-alternatives">
-              <button id="demoWechatBtn" type="button" class="secondary-button wechat-button">微信快捷填充</button>
-              <button id="demoSmsBtn" type="button" class="outline-button">短信登录演示</button>
-            </div>
-
             <div class="login-footer">
               <span>其他入口</span>
               <div class="login-links">
                 <a id="forgotPasswordLink" href="#">忘记密码</a>
-                <a id="registerLink" href="#">申请开通</a>
+                <a id="registerLink" href="#">注册账号</a>
               </div>
             </div>
           </div>
@@ -178,6 +180,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.0/dist/tesseract.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

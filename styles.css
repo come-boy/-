@@ -319,6 +319,40 @@ main {
   font-size: 1.1rem;
 }
 
+.permission-card {
+  padding: 22px 22px 18px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.permission-title {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.permission-body {
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.7;
+  font-size: 0.94rem;
+}
+
+.permission-body p {
+  margin: 0;
+}
+
+.permission-body ul {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.permission-body li {
+  color: rgba(255, 255, 255, 0.78);
+}
+
 .login-card {
   padding: 34px;
   border-radius: 32px;
@@ -392,20 +426,6 @@ main {
 .login-hint p {
   margin: 12px 0 0;
   color: var(--text-soft);
-}
-
-.demo-account-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.demo-account {
-  padding: 12px 10px;
-  border-radius: 16px;
-  background: #fff;
-  color: var(--text);
-  border: 1px solid rgba(79, 124, 255, 0.14);
 }
 
 .login-alternatives,
@@ -833,6 +853,13 @@ main {
   background: var(--neutral-soft);
 }
 
+.lead-mark-pills {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 .funnel,
 .progress-list {
   gap: 14px;
@@ -1095,7 +1122,6 @@ main {
   }
 
   .metric-strip,
-  .demo-account-grid,
   .hero-side {
     grid-template-columns: 1fr;
   }
@@ -1391,10 +1417,6 @@ main {
 .metric-card-mini,
 .feature-item {
   border-radius: 22px;
-}
-
-.demo-account {
-  font-weight: 700;
 }
 
 .dashboard {
@@ -1915,8 +1937,7 @@ main {
   }
 
   .hero-side,
-  .metric-strip,
-  .demo-account-grid {
+  .metric-strip {
     grid-template-columns: 1fr;
   }
 

@@ -27,31 +27,24 @@ const loginForm = document.getElementById('loginForm');
 const usernameInput = document.getElementById('username');
 const passwordInput = document.getElementById('password');
 const leadImportInput = document.getElementById('leadImportInput');
-const demoWechatBtn = document.getElementById('demoWechatBtn');
-const demoSmsBtn = document.getElementById('demoSmsBtn');
 const forgotPasswordLink = document.getElementById('forgotPasswordLink');
 const registerLink = document.getElementById('registerLink');
-const demoAccountButtons = document.querySelectorAll('.demo-account');
 
-const storageKey = 'admissionsDashboardData';
+const storageKeyBase = 'admissionsDashboardData';
 const authKey = 'admissionsAuth';
 const dataVersionKey = 'admissionsDashboardVersion';
-const currentDataVersion = '2026-06-09-refresh-zh-cn-v1';
-
-const authUsers = [
-  { username: 'superadmin', password: 'team2026', role: 'super', teamId: null, memberId: null },
-  { username: 'lead_green', password: 'team2026', role: 'lead', teamId: 1, memberId: 2 },
-  { username: 'member_lina', password: 'team2026', role: 'member', teamId: 1, memberId: 1 },
-];
+const currentDataVersion = '2026-06-11-production-v1';
 
 const sections = [
-  { key: 'overview', label: '工作台', icon: '总览', hint: '查看总览、待办事项与关键提醒', roles: ['super', 'lead', 'member'] },
-  { key: 'team', label: '招生团队', icon: '团队', hint: '维护团队分组与基础资料', roles: ['super', 'lead'] },
-  { key: 'members', label: '团队成员', icon: '成员', hint: '管理成员信息与联系方式', roles: ['super', 'lead', 'member'] },
-  { key: 'schools', label: '招生学校', icon: '学校', hint: '整理学校分布与归属关系', roles: ['super', 'lead'] },
-  { key: 'leads', label: '线索跟进', icon: '线索', hint: '跟进学生咨询、联系记录与状态', roles: ['super', 'lead', 'member'] },
-  { key: 'connections', label: '对接关系', icon: '对接', hint: '维护班级、班主任和招生老师对应关系', roles: ['super', 'lead'] },
-  { key: 'monitor', label: '数据看板', icon: '看板', hint: '查看转化进度与团队效率分析', roles: ['super', 'lead', 'member'] },
+  { key: 'overview', label: '工作台', icon: '总览', hint: '查看总览、待办事项与关键提醒', roles: ['super', 'teacher'] },
+  { key: 'team', label: '招生团队', icon: '团队', hint: '维护团队分组与基础资料', roles: ['super'] },
+  { key: 'members', label: '团队成员', icon: '成员', hint: '管理成员信息与联系方式', roles: ['super'] },
+  { key: 'schools', label: '招生学校', icon: '学校', hint: '整理学校分布与归属关系', roles: ['super'] },
+  { key: 'leads', label: '线索跟进', icon: '线索', hint: '跟进学生咨询、联系记录与状态', roles: ['super', 'teacher'] },
+  { key: 'connections', label: '对接关系', icon: '对接', hint: '维护班级、班主任和招生老师对应关系', roles: ['super'] },
+  { key: 'monitor', label: '数据看板', icon: '看板', hint: '查看转化进度与团队效率分析', roles: ['super'] },
+  { key: 'accounts', label: '账号审核', icon: '审核', hint: '审核招生老师注册信息，并维护团队负责人', roles: ['super'] },
+  { key: 'profile', label: '个人中心', icon: '资料', hint: '查看并维护个人信息', roles: ['teacher', 'parent', 'student'] },
 ];
 
 const notificationLabels = {
@@ -62,8 +55,9 @@ const notificationLabels = {
 
 const roleLabels = {
   super: '超级管理员',
-  lead: '团队负责人',
-  member: '招生老师',
+  teacher: '招生老师',
+  parent: '学生家长',
+  student: '学生',
 };
 
 const leadImportColumnAliases = {
@@ -81,68 +75,13 @@ const leadImportColumnAliases = {
   lastContactTime: ['最近联系', '最近联系时间', '最后联系时间', 'lastcontacttime', 'contacttime'],
 };
 
-const demoTextMap = {
-  'Green Valley School': '青禾学校',
-  'Riverside Prep': '江畔预备学校',
-  'Admissions Team': '招生团队',
-  'Admissions Officer': '招生顾问',
-  'Team Lead': '团队负责人',
-  'North City': '北城区',
-  'East District': '东城区',
-  'Grade 1': '一年级',
-  'Grade 2': '二年级',
-  'Grade 3': '三年级',
-  'Initial inquiry': '首次咨询',
-  'Scheduled school visit': '已预约到校参观',
-  'Needs follow-up': '需要持续跟进',
-  Pending: '待跟进',
-  'In progress': '跟进中',
-  Enrolled: '已报名',
-  Completed: '已完成',
-  'Lina Chen': '林娜',
-  'Mark Huang': '黄铭',
-  'Yuna Zhang': '张雨娜',
-  'Emily Wang': '王可依',
-  'Jason Li': '李俊泽',
-  'Mei Chen': '陈思妍',
-  'Mrs. Wang': '王女士',
-  'Mr. Li': '李先生',
-  'Ms. Chen': '陈女士',
-  'Ms. Sun': '孙老师',
-  'Mr. Zhou': '周老师',
-  'Ms. Liu': '刘老师',
-};
-
 const initialData = {
-  team: [
-    { id: 1, schoolName: '青禾学校', role: '招生团队', contacts: 'admissions@qinghe.edu', phone: '010-6688-1001', teamId: 1 },
-    { id: 2, schoolName: '江畔预备学校', role: '招生团队', contacts: 'service@jiangpan.edu', phone: '010-6688-2002', teamId: 2 },
-  ],
-  members: [
-    { id: 1, name: '林娜', title: '招生顾问', email: 'lina@qinghe.edu', phone: '138-0000-0110', teamId: 1 },
-    { id: 2, name: '黄铭', title: '团队负责人', email: 'mark@qinghe.edu', phone: '138-0000-0120', teamId: 1 },
-    { id: 3, name: '张雨娜', title: '团队负责人', email: 'yuna@jiangpan.edu', phone: '138-0000-0220', teamId: 2 },
-  ],
-  schools: [
-    { id: 1, name: '青禾学校', location: '北城区', teamId: 1 },
-    { id: 2, name: '江畔预备学校', location: '东城区', teamId: 2 },
-  ],
-  leadStudents: [
-    { id: 1, name: '王可依', grade: '一年级', parent: '王女士', phone: '139-0000-0211', called: false, followUp: '首次咨询，需要介绍课程与校车路线。', assignedTeacher: '林娜', assignedTeacherId: 1, enrollmentStatus: '待跟进', teamId: 1, priority: '高', lastContactTime: '' },
-    { id: 2, name: '李俊泽', grade: '三年级', parent: '李先生', phone: '139-0000-0212', called: true, followUp: '已预约周六到校参观。', assignedTeacher: '黄铭', assignedTeacherId: 2, enrollmentStatus: '跟进中', teamId: 1, priority: '中', lastContactTime: '2026-06-08 16:30' },
-    { id: 3, name: '陈思妍', grade: '二年级', parent: '陈女士', phone: '139-0000-0221', called: false, followUp: '家长希望了解双语课程安排。', assignedTeacher: '张雨娜', assignedTeacherId: 3, enrollmentStatus: '待跟进', teamId: 2, priority: '中', lastContactTime: '' },
-  ],
-  connections: [
-    { id: 1, school: '青禾学校', className: '一年级一班', headTeacher: '孙老师', recruitmentTeacher: '林娜', recruitmentTeacherId: 1, teamId: 1 },
-    { id: 2, school: '青禾学校', className: '三年级二班', headTeacher: '周老师', recruitmentTeacher: '黄铭', recruitmentTeacherId: 2, teamId: 1 },
-    { id: 3, school: '江畔预备学校', className: '二年级一班', headTeacher: '刘老师', recruitmentTeacher: '张雨娜', recruitmentTeacherId: 3, teamId: 2 },
-  ],
-  notifications: [
-    { id: 1, category: 'system', title: '系统维护通知', body: '今晚 22:00 将进行系统维护，预计持续 20 分钟。', time: '2026-06-09 09:00', read: false },
-    { id: 2, category: 'team', title: '团队例会提醒', body: '本周五上午 10:00 召开招生复盘会，请提前准备本周转化数据。', time: '2026-06-09 08:20', read: false },
-    { id: 3, category: 'parent', title: '家长回复已收到', body: '王女士已确认周六到校参观，请及时发送入校指引。', time: '2026-06-08 18:20', read: false },
-    { id: 4, category: 'system', title: '移动端体验升级', body: '新版页面已支持手机与桌面端自动适配，可直接在手机浏览器访问。', time: '2026-06-08 10:30', read: true },
-  ],
+  team: [],
+  members: [],
+  schools: [],
+  leadStudents: [],
+  connections: [],
+  notifications: [],
 };
 
 const uiState = {
@@ -160,6 +99,11 @@ const uiState = {
 
 function cloneInitialData() {
   return JSON.parse(JSON.stringify(initialData));
+}
+
+function getStorageKey(user) {
+  const keyPart = user?.id || user?.username || 'public';
+  return `${storageKeyBase}_${keyPart}`;
 }
 
 function safeParseJSON(value) {
@@ -182,7 +126,7 @@ function escapeHTML(value) {
 
 function localizeDemoText(value) {
   const text = String(value ?? '').trim();
-  return demoTextMap[text] || text;
+  return text;
 }
 
 function normalizePhone(value) {
@@ -327,6 +271,25 @@ function showToast(message, type = 'info') {
   }, 2600);
 }
 
+async function apiRequest(url, options = {}) {
+  const response = await fetch(url, {
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+    ...options,
+  });
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    const error = new Error(payload?.code || 'REQUEST_FAILED');
+    error.code = payload?.code || 'REQUEST_FAILED';
+    error.status = response.status;
+    throw error;
+  }
+  return payload;
+}
+
 function normalizeData(data) {
   const seed = cloneInitialData();
   const source = data && typeof data === 'object' ? data : {};
@@ -339,6 +302,7 @@ function normalizeData(data) {
       contacts: String(item.contacts || seed.team[index]?.contacts || '').trim(),
       phone: normalizePhone(item.phone || seed.team[index]?.phone || ''),
       teamId: Number(item.teamId) || seed.team[index]?.teamId || index + 1,
+      createdBy: String(item.createdBy || seed.team[index]?.createdBy || ''),
     })) : seed.team,
     members: Array.isArray(source.members) && source.members.length ? source.members.map((item, index) => ({
       id: Number(item.id) || seed.members[index]?.id || generateId(),
@@ -346,13 +310,15 @@ function normalizeData(data) {
       title: localizeDemoText(item.title || seed.members[index]?.title || '招生顾问'),
       email: String(item.email || seed.members[index]?.email || '').trim(),
       phone: normalizePhone(item.phone || seed.members[index]?.phone || ''),
-      teamId: Number(item.teamId) || seed.members[index]?.teamId || seed.team[0].teamId,
+      teamId: Number(item.teamId) || seed.members[index]?.teamId || seed.team[0]?.teamId || 1,
+      createdBy: String(item.createdBy || seed.members[index]?.createdBy || ''),
     })) : seed.members,
     schools: Array.isArray(source.schools) && source.schools.length ? source.schools.map((item, index) => ({
       id: Number(item.id) || seed.schools[index]?.id || generateId(),
       name: localizeDemoText(item.name || item.schoolName || seed.schools[index]?.name || `学校${index + 1}`),
       location: localizeDemoText(item.location || seed.schools[index]?.location || '未设置区域'),
-      teamId: Number(item.teamId) || seed.schools[index]?.teamId || seed.team[0].teamId,
+      teamId: Number(item.teamId) || seed.schools[index]?.teamId || seed.team[0]?.teamId || 1,
+      createdBy: String(item.createdBy || seed.schools[index]?.createdBy || ''),
     })) : seed.schools,
     leadStudents: Array.isArray(source.leadStudents) && source.leadStudents.length ? source.leadStudents.map((item, index) => ({
       id: Number(item.id) || seed.leadStudents[index]?.id || generateId(),
@@ -361,13 +327,20 @@ function normalizeData(data) {
       parent: localizeDemoText(item.parent || seed.leadStudents[index]?.parent || '家长'),
       phone: normalizePhone(item.phone || seed.leadStudents[index]?.phone || ''),
       called: Boolean(item.called),
+      callOutcome: String(item.callOutcome || ''),
       followUp: localizeDemoText(item.followUp || seed.leadStudents[index]?.followUp || '待补充跟进内容'),
       assignedTeacher: localizeDemoText(item.assignedTeacher || seed.leadStudents[index]?.assignedTeacher || '未分配'),
       assignedTeacherId: Number(item.assignedTeacherId) || 0,
       enrollmentStatus: mapEnrollmentStatus(item.enrollmentStatus || seed.leadStudents[index]?.enrollmentStatus),
-      teamId: Number(item.teamId) || seed.leadStudents[index]?.teamId || seed.team[0].teamId,
+      teamId: Number(item.teamId) || seed.leadStudents[index]?.teamId || seed.team[0]?.teamId || 1,
       priority: mapPriority(item.priority || seed.leadStudents[index]?.priority),
       lastContactTime: String(item.lastContactTime || seed.leadStudents[index]?.lastContactTime || ''),
+      createdBy: String(item.createdBy || seed.leadStudents[index]?.createdBy || ''),
+      favorite: Boolean(item.favorite),
+      nickname: String(item.nickname || ''),
+      note: String(item.note || ''),
+      wechatAdded: Boolean(item.wechatAdded),
+      keep: Boolean(item.keep),
     })) : seed.leadStudents,
     connections: Array.isArray(source.connections) && source.connections.length ? source.connections.map((item, index) => ({
       id: Number(item.id) || seed.connections[index]?.id || generateId(),
@@ -376,7 +349,8 @@ function normalizeData(data) {
       headTeacher: localizeDemoText(item.headTeacher || seed.connections[index]?.headTeacher || '未设置班主任'),
       recruitmentTeacher: localizeDemoText(item.recruitmentTeacher || seed.connections[index]?.recruitmentTeacher || '未分配'),
       recruitmentTeacherId: Number(item.recruitmentTeacherId) || 0,
-      teamId: Number(item.teamId) || seed.connections[index]?.teamId || seed.team[0].teamId,
+      teamId: Number(item.teamId) || seed.connections[index]?.teamId || seed.team[0]?.teamId || 1,
+      createdBy: String(item.createdBy || seed.connections[index]?.createdBy || ''),
     })) : seed.connections,
     notifications: Array.isArray(source.notifications) && source.notifications.length ? source.notifications.map((item, index) => ({
       id: Number(item.id) || seed.notifications[index]?.id || generateId(),
@@ -452,11 +426,15 @@ function repairData(data) {
 }
 
 function getData() {
+  const user = getCurrentUser();
+  const storageKey = getStorageKey(user);
   return repairData(safeParseJSON(localStorage.getItem(storageKey)));
 }
 
 function saveData(data) {
   const repaired = repairData(data);
+  const user = getCurrentUser();
+  const storageKey = getStorageKey(user);
   localStorage.setItem(storageKey, JSON.stringify(repaired));
   updateNotificationButton();
   updateGreeting();
@@ -464,15 +442,21 @@ function saveData(data) {
 
 function getAuth() {
   const auth = safeParseJSON(localStorage.getItem(authKey));
-  return auth && auth.username && auth.role ? auth : null;
+  return auth && auth.id && auth.role ? auth : null;
 }
 
 function saveAuth(user) {
   localStorage.setItem(authKey, JSON.stringify({
-    username: user.username,
-    role: user.role,
-    teamId: user.teamId,
-    memberId: user.memberId,
+    id: user.id,
+    username: user.username || '',
+    role: user.type || user.role,
+    name: user.name || '',
+    phone: user.phone || '',
+    employeeNo: user.employeeNo || '',
+    teamId: user.teamId || '',
+    linkedTeacherId: user.linkedTeacherId || '',
+    approved: Boolean(user.approved),
+    isTeamLead: Boolean(user.isTeamLead),
   }));
 }
 
@@ -485,65 +469,60 @@ function isSuperAdmin(user) {
 }
 
 function isTeamLead(user) {
-  return user?.role === 'lead';
+  return Boolean(user?.isTeamLead);
 }
 
 function isTeamMember(user) {
-  return user?.role === 'member';
+  return user?.role === 'teacher';
 }
 
 function canEditTeam(team, user) {
-  return isSuperAdmin(user) || (isTeamLead(user) && team.teamId === user.teamId);
+  return isSuperAdmin(user) || team.createdBy === user?.id;
 }
 
 function canEditMember(member, user) {
-  return isSuperAdmin(user) || (isTeamLead(user) && member.teamId === user.teamId) || (isTeamMember(user) && member.id === user.memberId);
+  return isSuperAdmin(user) || member.createdBy === user?.id;
 }
 
 function canDeleteMember(member, user) {
-  return (isSuperAdmin(user) || (isTeamLead(user) && member.teamId === user.teamId)) && member.id !== user?.memberId;
+  return isSuperAdmin(user) || member.createdBy === user?.id;
 }
 
 function canEditSchool(school, user) {
-  return isSuperAdmin(user) || (isTeamLead(user) && school.teamId === user.teamId);
+  return isSuperAdmin(user) || school.createdBy === user?.id;
 }
 
 function canEditLead(lead, user) {
-  return isSuperAdmin(user)
-    || (isTeamLead(user) && lead.teamId === user.teamId)
-    || (isTeamMember(user) && lead.assignedTeacherId === user.memberId);
+  return isSuperAdmin(user) || lead.createdBy === user?.id;
 }
 
 function canEditConnection(connection, user) {
-  return isSuperAdmin(user) || (isTeamLead(user) && connection.teamId === user.teamId);
+  return isSuperAdmin(user) || connection.createdBy === user?.id;
 }
 
 function getVisibleTeams(user, data) {
   if (isSuperAdmin(user)) return data.team;
-  return data.team.filter(team => team.teamId === user.teamId);
+  return data.team.filter(team => team.createdBy === user?.id);
 }
 
 function getVisibleMembers(user, data) {
   if (isSuperAdmin(user)) return data.members;
-  if (isTeamLead(user)) return data.members.filter(member => member.teamId === user.teamId);
-  return data.members.filter(member => member.id === user.memberId);
+  return data.members.filter(member => member.createdBy === user?.id);
 }
 
 function getVisibleSchools(user, data) {
   if (isSuperAdmin(user)) return data.schools;
-  return data.schools.filter(school => school.teamId === user.teamId);
+  return data.schools.filter(school => school.createdBy === user?.id);
 }
 
 function getVisibleLeads(user, data) {
   if (isSuperAdmin(user)) return data.leadStudents;
-  if (isTeamLead(user)) return data.leadStudents.filter(lead => lead.teamId === user.teamId);
-  return data.leadStudents.filter(lead => lead.assignedTeacherId === user.memberId);
+  return data.leadStudents.filter(lead => lead.createdBy === user?.id);
 }
 
 function getVisibleConnections(user, data) {
   if (isSuperAdmin(user)) return data.connections;
-  if (isTeamLead(user)) return data.connections.filter(connection => connection.teamId === user.teamId);
-  return [];
+  return data.connections.filter(connection => connection.createdBy === user?.id);
 }
 
 function getAssignableMembers(user, data) {
@@ -610,6 +589,15 @@ function renderStatusPill(label, className) {
   return `<span class="status-pill ${className}">${escapeHTML(label)}</span>`;
 }
 
+function renderLeadMarkPills(lead) {
+  const pills = [];
+  if (lead.favorite) pills.push(renderStatusPill('收藏', 'status-primary'));
+  if (lead.wechatAdded) pills.push(renderStatusPill('已加微', 'status-success'));
+  if (lead.keep) pills.push(renderStatusPill('保留', 'status-warning'));
+  if (lead.callOutcome) pills.push(renderStatusPill(lead.callOutcome, 'status-neutral'));
+  return pills.length ? `<div class="lead-mark-pills">${pills.join('')}</div>` : '';
+}
+
 function renderActionButtons(buttons) {
   return `<div class="inline-actions">${buttons.filter(Boolean).join('')}</div>`;
 }
@@ -640,6 +628,7 @@ function renderSectionLayout({ title, description, actions = '', body = '', stat
 }
 
 function getAccessibleSectionKeys(user) {
+  if (user?.role === 'teacher' && !user.approved) return ['profile'];
   return sections.filter(section => section.roles.includes(user?.role)).map(section => section.key);
 }
 
@@ -1060,7 +1049,7 @@ function renderLeadsSection(user, data) {
 
   const body = `
     <div class="filter-bar">
-      <div class="import-tip">支持一键导入 .xlsx / .xls / .csv，至少包含“学生姓名”和“家长电话”，重复线索会自动更新。</div>
+      <div class="import-tip">支持复制粘贴批量导入、文件导入（.xlsx/.xls/.csv），并可对号码进行收藏、加微、保留等标记。</div>
       <input class="search-input" type="search" placeholder="搜索学生、家长、负责人或跟进内容" value="${escapeHTML(uiState.filters.leadSearch)}" data-filter-section="leads" data-filter-key="leadSearch" />
       <select data-filter-section="leads" data-filter-key="leadStatus">
         <option value="all"${uiState.filters.leadStatus === 'all' ? ' selected' : ''}>全部状态</option>
@@ -1089,9 +1078,12 @@ function renderLeadsSection(user, data) {
           <tbody>
             ${filteredLeads.map(lead => `
               <tr>
-                <td data-label="学生信息"><strong>${escapeHTML(lead.name)}</strong><br /><span class="muted-text">${escapeHTML(lead.grade)} · ${escapeHTML(lead.parent)}</span></td>
+                <td data-label="学生信息"><strong>${escapeHTML(lead.nickname || lead.name || '未命名')}</strong><br /><span class="muted-text">${escapeHTML([lead.grade, lead.parent].filter(Boolean).join(' · ') || (lead.note ? lead.note : ''))}</span></td>
                 <td data-label="家长电话"><a class="plain-link" href="tel:${escapeHTML(normalizePhone(lead.phone))}">${escapeHTML(lead.phone)}</a></td>
-                <td data-label="联系状态">${renderStatusPill(lead.called ? '已联系' : '未联系', lead.called ? 'status-success' : 'status-warning')}</td>
+                <td data-label="联系状态">
+                  ${renderStatusPill(lead.called ? '已联系' : '未联系', lead.called ? 'status-success' : 'status-warning')}
+                  ${renderLeadMarkPills(lead)}
+                </td>
                 <td data-label="优先级">${renderStatusPill(lead.priority, getPriorityClass(lead.priority))}</td>
                 <td data-label="跟进内容">${escapeHTML(lead.followUp)}</td>
                 <td data-label="负责人">${escapeHTML(lead.assignedTeacher)}</td>
@@ -1100,6 +1092,9 @@ function renderLeadsSection(user, data) {
                 <td data-label="操作">
                   ${canEditLead(lead, user)
                     ? renderActionButtons([
+                      `<button type="button" class="text-button" data-favorite-lead="${lead.id}">${lead.favorite ? '取消收藏' : '收藏'}</button>`,
+                      `<button type="button" class="text-button" data-wechat-lead="${lead.id}">加微</button>`,
+                      `<button type="button" class="text-button" data-keep-lead="${lead.id}">${lead.keep ? '取消保留' : '保留'}</button>`,
                       `<button type="button" class="text-button" data-edit-lead="${lead.id}">编辑</button>`,
                       `<button type="button" class="text-button" data-call-lead="${lead.id}">${lead.called ? '更新联系' : '记录联系'}</button>`,
                       `<button type="button" class="text-button danger-text" data-delete-lead="${lead.id}">删除</button>`,
@@ -1119,6 +1114,9 @@ function renderLeadsSection(user, data) {
     description: '管理家长咨询、联系记录、优先级和报名状态，提升跟进效率。',
     actions: `
       <button type="button" class="outline-button" data-show-lead-import-help="true">导入说明</button>
+      <button type="button" class="secondary-button" data-import-leads-text="true">文本导入</button>
+      <button type="button" class="secondary-button" data-import-leads-image="true">图片导入</button>
+      <button type="button" class="secondary-button" data-import-leads-wechat="true">微信导入</button>
       <button type="button" class="secondary-button" data-import-leads="true">一键导入 Excel</button>
       <button type="button" class="primary-button" data-add-lead="true">新增线索</button>
     `,
@@ -1324,6 +1322,319 @@ function renderMonitorSection(user, data) {
   `;
 }
 
+function renderProfileSection(user) {
+  const approvalText = user.role === 'teacher' && !user.approved
+    ? '<div class="announcement-item"><div class="announcement-head"><strong>账号待审核</strong><span class="announcement-meta">请等待审核</span></div><p>你的招生老师账号已提交审核，审核通过后可进入工作台功能。</p></div>'
+    : '';
+
+  const stats = `
+    <div class="stats-grid compact-grid">
+      <div class="stats-card"><h3>姓名</h3><p>${escapeHTML(user.name || '未设置')}</p></div>
+      <div class="stats-card"><h3>手机号</h3><p>${escapeHTML(user.phone || '未设置')}</p></div>
+      <div class="stats-card"><h3>工号</h3><p>${escapeHTML(user.employeeNo || '未设置')}</p></div>
+      <div class="stats-card"><h3>身份类型</h3><p>${escapeHTML(formatRoleLabel(user.role))}</p></div>
+    </div>
+  `;
+
+  const body = `
+    ${approvalText}
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <h3 class="panel-title">个人信息</h3>
+          <p class="panel-caption">系统默认以注册信息为准，修改后会同步更新显示。</p>
+        </div>
+      </div>
+      <div class="list">
+        ${renderListRow('姓名', user.name || '未设置')}
+        ${renderListRow('手机号', user.phone || '未设置')}
+        ${renderListRow('工号', user.employeeNo || '未设置')}
+      </div>
+    </div>
+  `;
+
+  return renderSectionLayout({
+    title: '个人中心',
+    description: '查看并维护个人信息，修改仅对本人生效。',
+    actions: `
+      <button type="button" class="secondary-button" data-edit-profile="true">修改资料</button>
+      <button type="button" class="outline-button" data-change-password="true">修改密码</button>
+    `,
+    stats,
+    body,
+  });
+}
+
+function renderListRow(label, value) {
+  return `
+    <div class="list-row">
+      <div class="list-row-main">
+        <strong>${escapeHTML(label)}</strong>
+        <p>${escapeHTML(value)}</p>
+      </div>
+    </div>
+  `;
+}
+
+function renderAccountsSection(user) {
+  queueMicrotask(() => loadAccountsSection());
+  return renderSectionLayout({
+    title: '账号审核',
+    description: '审核招生老师注册信息、维护团队，以及设置团队负责人。',
+    actions: `
+      <button type="button" class="primary-button" data-add-backend-team="true">新增团队</button>
+      <button type="button" class="outline-button" data-refresh-accounts="true">刷新</button>
+    `,
+    body: `
+      <div class="panel" id="accountsTeamPanel">
+        <div class="panel-header">
+          <div>
+            <h3 class="panel-title">团队列表</h3>
+            <p class="panel-caption">用于招生老师注册选择所属团队。</p>
+          </div>
+        </div>
+        <div class="table-card"><div class="muted-text">加载中...</div></div>
+      </div>
+
+      <div class="panel" id="accountsPendingPanel" style="margin-top:16px">
+        <div class="panel-header">
+          <div>
+            <h3 class="panel-title">待审核老师</h3>
+            <p class="panel-caption">审核通过后，老师即可进入工作台。</p>
+          </div>
+        </div>
+        <div class="table-card"><div class="muted-text">加载中...</div></div>
+      </div>
+
+      <div class="panel" id="accountsTeacherPanel" style="margin-top:16px">
+        <div class="panel-header">
+          <div>
+            <h3 class="panel-title">已审核老师</h3>
+            <p class="panel-caption">可设置/取消团队负责人。</p>
+          </div>
+        </div>
+        <div class="table-card"><div class="muted-text">加载中...</div></div>
+      </div>
+    `,
+  });
+}
+
+async function loadAccountsSection() {
+  const user = getCurrentUser();
+  if (!user || !isSuperAdmin(user)) return;
+  const teamPanel = document.getElementById('accountsTeamPanel');
+  const pendingPanel = document.getElementById('accountsPendingPanel');
+  const teacherPanel = document.getElementById('accountsTeacherPanel');
+  if (!teamPanel || !pendingPanel || !teacherPanel) return;
+
+  try {
+    const [{ teams }, { pending }, { teachers }] = await Promise.all([
+      apiRequest('/api/admin/teams', { method: 'GET' }),
+      apiRequest('/api/admin/pending-teachers', { method: 'GET' }),
+      apiRequest('/api/admin/teachers', { method: 'GET' }),
+    ]);
+
+    teamPanel.querySelector('.table-card').innerHTML = teams.length ? `
+      <table>
+        <thead><tr><th>团队名称</th><th>操作</th></tr></thead>
+        <tbody>
+          ${teams.map(team => `
+            <tr>
+              <td data-label="团队名称">${escapeHTML(team.name)}</td>
+              <td data-label="操作">${renderActionButtons([
+                `<button type="button" class="text-button danger-text" data-delete-backend-team="${team.id}">删除</button>`,
+              ])}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    ` : renderEmptyState('暂无团队', '请先新增团队后再进行老师注册。');
+
+    pendingPanel.querySelector('.table-card').innerHTML = pending.length ? `
+      <table>
+        <thead><tr><th>姓名</th><th>手机号</th><th>工号</th><th>团队</th><th>操作</th></tr></thead>
+        <tbody>
+          ${pending.map(item => `
+            <tr>
+              <td data-label="姓名">${escapeHTML(item.name)}</td>
+              <td data-label="手机号">${escapeHTML(item.phone)}</td>
+              <td data-label="工号">${escapeHTML(item.employeeNo)}</td>
+              <td data-label="团队">${escapeHTML(getTeamNameById(item.teamId, teams))}</td>
+              <td data-label="操作">${renderActionButtons([
+                `<button type="button" class="text-button" data-approve-teacher="${item.id}">通过</button>`,
+                `<button type="button" class="text-button danger-text" data-reject-teacher="${item.id}">驳回</button>`,
+              ])}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    ` : renderEmptyState('暂无待审核账号', '当前没有需要审核的招生老师注册信息。');
+
+    teacherPanel.querySelector('.table-card').innerHTML = teachers.length ? `
+      <table>
+        <thead><tr><th>姓名</th><th>手机号</th><th>团队</th><th>负责人</th><th>操作</th></tr></thead>
+        <tbody>
+          ${teachers.map(item => `
+            <tr>
+              <td data-label="姓名">${escapeHTML(item.name)}</td>
+              <td data-label="手机号">${escapeHTML(item.phone)}</td>
+              <td data-label="团队">${escapeHTML(getTeamNameById(item.teamId, teams))}</td>
+              <td data-label="负责人">${renderStatusPill(item.isTeamLead ? '是' : '否', item.isTeamLead ? 'status-success' : 'status-muted')}</td>
+              <td data-label="操作">${renderActionButtons([
+                `<button type="button" class="text-button" data-toggle-team-lead="${item.id}" data-team-lead="${item.isTeamLead ? '0' : '1'}">${item.isTeamLead ? '取消负责人' : '设为负责人'}</button>`,
+              ])}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    ` : renderEmptyState('暂无老师账号', '请先完成老师注册并审核。');
+  } catch {
+    if (teamPanel.querySelector('.table-card')) teamPanel.querySelector('.table-card').innerHTML = renderEmptyState('加载失败', '请检查网络或稍后重试。');
+    if (pendingPanel.querySelector('.table-card')) pendingPanel.querySelector('.table-card').innerHTML = renderEmptyState('加载失败', '请检查网络或稍后重试。');
+    if (teacherPanel.querySelector('.table-card')) teacherPanel.querySelector('.table-card').innerHTML = renderEmptyState('加载失败', '请检查网络或稍后重试。');
+  }
+}
+
+function getTeamNameById(teamId, teams) {
+  return teams.find(team => team.id === teamId)?.name || '未设置';
+}
+
+function showProfileEditForm() {
+  const user = getCurrentUser();
+  if (!user) return;
+  showModal({
+    title: '修改资料',
+    description: '修改后会以最新信息显示。',
+    fields: [
+      { name: 'name', label: '姓名', value: user.name || '', placeholder: '请输入姓名' },
+      { name: 'employeeNo', label: '工号', value: user.employeeNo || '', placeholder: '请输入工号' },
+    ],
+    submitText: '保存修改',
+    onSubmit: async payload => {
+      try {
+        const result = await apiRequest('/api/me', {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        });
+        saveAuth(result.user);
+        showToast('个人信息已更新。', 'success');
+        refreshCurrentSection();
+        return true;
+      } catch {
+        showToast('更新失败，请稍后重试。', 'error');
+        return false;
+      }
+    },
+  });
+}
+
+function showPasswordChangeForm() {
+  showModal({
+    title: '修改密码',
+    description: '密码需 8 位以上且包含字母与数字。',
+    fields: [
+      {
+        name: 'password',
+        label: '新密码',
+        type: 'password',
+        autocomplete: 'new-password',
+        validate: value => (isStrongPassword(value) ? true : '密码需 8 位以上且包含字母与数字。'),
+      },
+      {
+        name: 'confirmPassword',
+        label: '确认新密码',
+        type: 'password',
+        autocomplete: 'new-password',
+        validate: (value, payload) => (value === payload.password ? true : '两次输入密码不一致。'),
+      },
+    ],
+    submitText: '确认修改',
+    onSubmit: async payload => {
+      try {
+        await apiRequest('/api/me', {
+          method: 'PATCH',
+          body: JSON.stringify({ password: payload.password }),
+        });
+        showToast('密码已更新，请妥善保管。', 'success');
+        return true;
+      } catch {
+        showToast('修改失败，请稍后重试。', 'error');
+        return false;
+      }
+    },
+  });
+}
+
+function showBackendTeamForm() {
+  showModal({
+    title: '新增团队',
+    description: '创建后可用于招生老师注册选择所属团队。',
+    fields: [{ name: 'name', label: '团队名称', placeholder: '请输入团队名称' }],
+    submitText: '创建团队',
+    onSubmit: async payload => {
+      try {
+        await apiRequest('/api/admin/teams', { method: 'POST', body: JSON.stringify(payload) });
+        showToast('团队已创建。', 'success');
+        loadAccountsSection();
+        return true;
+      } catch (error) {
+        if (error.code === 'TEAM_EXISTS') {
+          showToast('该团队名称已存在。', 'error');
+          return false;
+        }
+        showToast('创建失败，请稍后重试。', 'error');
+        return false;
+      }
+    },
+  });
+}
+
+async function deleteBackendTeam(teamId) {
+  const confirmed = await showConfirm({
+    title: '删除团队',
+    description: '删除后该团队将不可用于注册选择，且不可恢复。',
+    confirmText: '确认删除',
+  });
+  if (!confirmed) return;
+  try {
+    await apiRequest(`/api/admin/teams/${teamId}`, { method: 'DELETE' });
+    showToast('团队已删除。', 'success');
+    loadAccountsSection();
+  } catch (error) {
+    if (error.code === 'TEAM_IN_USE') {
+      showToast('该团队仍有关联的老师账号，无法删除。', 'error');
+      return;
+    }
+    showToast('删除失败，请稍后重试。', 'error');
+  }
+}
+
+async function approveTeacher(userId, approved) {
+  try {
+    await apiRequest('/api/admin/approve-teacher', {
+      method: 'POST',
+      body: JSON.stringify({ userId, approved }),
+    });
+    showToast(approved ? '已通过审核。' : '已驳回申请。', 'success');
+    loadAccountsSection();
+  } catch {
+    showToast('操作失败，请稍后重试。', 'error');
+  }
+}
+
+async function toggleTeamLead(userId, nextValue) {
+  try {
+    await apiRequest('/api/admin/set-team-lead', {
+      method: 'POST',
+      body: JSON.stringify({ userId, isTeamLead: Boolean(nextValue) }),
+    });
+    showToast('已更新负责人设置。', 'success');
+    loadAccountsSection();
+  } catch {
+    showToast('操作失败，请稍后重试。', 'error');
+  }
+}
+
 function renderSection(sectionKey) {
   const user = getCurrentUser();
   const data = getData();
@@ -1337,6 +1648,8 @@ function renderSection(sectionKey) {
     leads: () => renderLeadsSection(user, data),
     connections: () => renderConnectionsSection(user, data),
     monitor: () => renderMonitorSection(user, data),
+    accounts: () => renderAccountsSection(user),
+    profile: () => renderProfileSection(user),
   };
 
   sectionContent.innerHTML = renderers[sectionKey] ? renderers[sectionKey]() : '';
@@ -1468,8 +1781,19 @@ function showModal({ title, description = '', fields = [], submitText = '保存'
       }
     }
 
-    const shouldClose = onSubmit(payload) !== false;
-    if (shouldClose) close();
+    const submitButton = form.querySelector('button[type="submit"]');
+    const result = onSubmit(payload);
+    if (result && typeof result.then === 'function') {
+      if (submitButton) submitButton.disabled = true;
+      result.then(shouldClose => {
+        if (submitButton) submitButton.disabled = false;
+        if (shouldClose !== false) close();
+      }).catch(() => {
+        if (submitButton) submitButton.disabled = false;
+      });
+      return;
+    }
+    if (result !== false) close();
   });
 
   modalContainer.appendChild(overlay);
@@ -1544,17 +1868,16 @@ function showLeadImportGuide() {
 }
 
 function resolveImportedLeadOwnership(row, user, data) {
+  if (isTeamMember(user)) {
+    const teamId = Number(user.teamId) || 0;
+    return { teamId, teacher: { id: 0, name: user.name || user.phone || '本人', teamId } };
+  }
+
   const editableTeams = getEditableTeams(user, data);
   const assignableMembers = getAssignableMembers(user, data);
-  const currentMember = data.members.find(member => member.id === user?.memberId);
 
   if (!editableTeams.length || !assignableMembers.length) {
     return { error: '当前账号没有可用的分组或负责人，无法导入。' };
-  }
-
-  if (isTeamMember(user)) {
-    if (!currentMember) return { error: '当前账号未关联成员信息，无法导入。' };
-    return { teamId: currentMember.teamId, teacher: currentMember };
   }
 
   const importedTeamId = parseImportedTeamId(getImportCell(row, leadImportColumnAliases.teamId), data);
@@ -1604,7 +1927,7 @@ function importLeadRows(rows, fileName = '') {
     const rowNumber = index + 2;
     if (isImportRowEmpty(row)) return;
 
-    const name = localizeDemoText(getImportCell(row, leadImportColumnAliases.name));
+    let name = localizeDemoText(getImportCell(row, leadImportColumnAliases.name));
     const phone = normalizePhone(getImportCell(row, leadImportColumnAliases.phone));
     const grade = localizeDemoText(getImportCell(row, leadImportColumnAliases.grade));
     const parent = localizeDemoText(getImportCell(row, leadImportColumnAliases.parent));
@@ -1614,9 +1937,15 @@ function importLeadRows(rows, fileName = '') {
     const calledValue = getImportCell(row, leadImportColumnAliases.called);
     const lastContactTime = getImportCell(row, leadImportColumnAliases.lastContactTime);
 
-    if (!name || !phone) {
+    if (!phone) {
       summary.skipped += 1;
-      summary.errors.push(`第 ${rowNumber} 行缺少学生姓名或家长电话`);
+      summary.errors.push(`第 ${rowNumber} 行缺少电话号码`);
+      return;
+    }
+    if (!name && isTeamMember(user)) name = phone;
+    if (!name) {
+      summary.skipped += 1;
+      summary.errors.push(`第 ${rowNumber} 行缺少姓名`);
       return;
     }
     if (!isValidPhone(phone)) {
@@ -1645,6 +1974,7 @@ function importLeadRows(rows, fileName = '') {
       priority: mapPriority(priority || '中'),
       called: parseImportedBoolean(calledValue, false),
       lastContactTime: String(lastContactTime || '').trim(),
+      createdBy: user.id,
     };
 
     const existing = data.leadStudents.find(item => {
@@ -1950,6 +2280,88 @@ function showLeadForm(id) {
   const user = getCurrentUser();
   const data = getData();
   const existing = data.leadStudents.find(item => item.id === id) || {};
+  if (!isSuperAdmin(user)) {
+    showModal({
+      title: existing.id ? '编辑线索' : '新增线索',
+      description: '用于记录电话号码、跟进备注与标记状态。',
+      submitText: '保存线索',
+      fields: [
+        { name: 'name', label: '姓名', value: existing.name || '', placeholder: '可不填' , required: false },
+        { name: 'phone', label: '电话号码', type: 'tel', value: existing.phone || '', placeholder: '请输入电话号码', inputMode: 'tel', validate: value => isValidPhone(value) || '请输入有效的电话号码。' },
+        { name: 'followUp', label: '备注 / 跟进', type: 'textarea', value: existing.followUp || '', placeholder: '请输入备注或跟进记录', rows: 4 },
+        {
+          name: 'enrollmentStatus',
+          label: '状态',
+          options: [
+            { value: '待跟进', label: '待跟进' },
+            { value: '跟进中', label: '跟进中' },
+            { value: '已报名', label: '已完成' },
+            { value: '已搁置', label: '已搁置' },
+          ],
+          value: existing.enrollmentStatus || '待跟进',
+        },
+        {
+          name: 'priority',
+          label: '优先级',
+          options: [
+            { value: '高', label: '高' },
+            { value: '中', label: '中' },
+            { value: '低', label: '低' },
+          ],
+          value: existing.priority || '中',
+        },
+      ],
+      onSubmit: values => {
+        const leadId = existing.id || generateId();
+        const normalizedPhone = normalizePhone(values.phone);
+        const duplicateLead = data.leadStudents.find(item => item.id !== existing.id
+          && normalizePhone(item.phone) === normalizedPhone
+          && item.createdBy === user.id);
+        if (duplicateLead) {
+          showToast('该号码已存在于你的线索中，请避免重复导入。', 'error');
+          return false;
+        }
+
+        const payload = {
+          name: values.name,
+          grade: existing.grade || '',
+          parent: existing.parent || '',
+          phone: normalizedPhone,
+          followUp: values.followUp,
+          assignedTeacherId: 0,
+          assignedTeacher: user.name || user.phone || '本人',
+          enrollmentStatus: mapEnrollmentStatus(values.enrollmentStatus),
+          teamId: Number(user.teamId) || 0,
+          priority: mapPriority(values.priority),
+          createdBy: user.id,
+        };
+
+        if (existing.id) {
+          Object.assign(existing, payload);
+        } else {
+          data.leadStudents.push({
+            id: leadId,
+            called: false,
+            callOutcome: '',
+            lastContactTime: '',
+            favorite: false,
+            nickname: '',
+            note: '',
+            wechatAdded: false,
+            keep: false,
+            ...payload,
+          });
+        }
+
+        saveData(data);
+        showToast('线索信息已保存。', 'success');
+        refreshCurrentSection();
+        return true;
+      },
+    });
+    return;
+  }
+
   const assignableMembers = getAssignableMembers(user, data);
   const editableTeams = getEditableTeams(user, data);
 
@@ -1971,7 +2383,7 @@ function showLeadForm(id) {
       { name: 'parent', label: '家长姓名', value: existing.parent || '', placeholder: '请输入家长姓名' },
       { name: 'phone', label: '家长电话', type: 'tel', value: existing.phone || '', placeholder: '请输入联系电话', inputMode: 'tel', validate: value => isValidPhone(value) || '请输入有效的家长电话。' },
       { name: 'followUp', label: '跟进内容', type: 'textarea', value: existing.followUp || '', placeholder: '请输入跟进说明', rows: 4 },
-      { name: 'assignedTeacherId', label: '负责人', options: teacherOptions, value: String(existing.assignedTeacherId || (isTeamMember(user) ? user.memberId : teacherOptions[0]?.value || '')), required: true },
+      { name: 'assignedTeacherId', label: '负责人', options: teacherOptions, value: String(existing.assignedTeacherId || teacherOptions[0]?.value || ''), required: true },
       {
         name: 'enrollmentStatus',
         label: '报名状态',
@@ -1997,15 +2409,14 @@ function showLeadForm(id) {
         name: 'teamId',
         label: '所属分组',
         options: teamOptions,
-        value: String(existing.teamId || (isTeamMember(user) ? user.teamId : teamOptions[0]?.value || '')),
+        value: String(existing.teamId || teamOptions[0]?.value || ''),
         required: true,
-        disabled: isTeamMember(user),
       },
     ],
     onSubmit: values => {
       const leadId = existing.id || generateId();
       const assignedTeacherId = Number(values.assignedTeacherId);
-      const teamId = Number(values.teamId || user.teamId);
+      const teamId = Number(values.teamId);
       const teacher = data.members.find(member => member.id === assignedTeacherId);
       const duplicateLead = data.leadStudents.find(item => item.id !== existing.id
         && normalizeSearchText(item.name) === normalizeSearchText(values.name)
@@ -2035,12 +2446,24 @@ function showLeadForm(id) {
         enrollmentStatus: mapEnrollmentStatus(values.enrollmentStatus),
         teamId,
         priority: mapPriority(values.priority),
+        createdBy: user.id,
       };
 
       if (existing.id) {
         Object.assign(existing, payload);
       } else {
-        data.leadStudents.push({ id: leadId, called: false, lastContactTime: '', ...payload });
+        data.leadStudents.push({
+          id: leadId,
+          called: false,
+          callOutcome: '',
+          lastContactTime: '',
+          favorite: false,
+          nickname: '',
+          note: '',
+          wechatAdded: false,
+          keep: false,
+          ...payload,
+        });
       }
 
       saveData(data);
@@ -2245,22 +2668,191 @@ async function deleteConnection(id) {
 }
 
 function markLeadCalled(id) {
+  const user = getCurrentUser();
   const data = getData();
   const lead = data.leadStudents.find(item => item.id === id);
-  if (!lead) return;
+  if (!lead || !canEditLead(lead, user)) return;
 
-  lead.called = true;
-  lead.lastContactTime = formatNow();
-  if (!lead.followUp || lead.followUp === '待补充跟进内容') {
-    lead.followUp = '已完成首次电话沟通，等待下一步跟进。';
-  }
-  if (lead.enrollmentStatus === '待跟进') {
-    lead.enrollmentStatus = '跟进中';
-  }
+  showModal({
+    title: lead.called ? '更新联系记录' : '记录联系',
+    description: '用于标记通话结果并补充跟进说明。',
+    fields: [
+      {
+        name: 'callOutcome',
+        label: '通话结果',
+        options: [
+          { value: '已接通', label: '已接通' },
+          { value: '无人接听', label: '无人接听' },
+          { value: '占线', label: '占线' },
+          { value: '拒接', label: '拒接' },
+          { value: '停机/空号', label: '停机/空号' },
+          { value: '微信沟通', label: '微信沟通' },
+          { value: '其他', label: '其他' },
+        ],
+        value: lead.callOutcome || (lead.called ? '已接通' : '已接通'),
+      },
+      { name: 'followUp', label: '备注 / 跟进', type: 'textarea', value: lead.followUp || '', placeholder: '请输入本次联系记录（可选）', rows: 4, required: false },
+    ],
+    submitText: '保存记录',
+    onSubmit: values => {
+      lead.called = true;
+      lead.callOutcome = values.callOutcome;
+      lead.lastContactTime = formatNow();
+      if (values.followUp !== undefined && values.followUp !== null) {
+        lead.followUp = values.followUp;
+      }
+      if (lead.enrollmentStatus === '待跟进') {
+        lead.enrollmentStatus = '跟进中';
+      }
+      saveData(data);
+      refreshCurrentSection();
+      showToast('已更新联系记录。', 'success');
+      return true;
+    },
+  });
+}
 
+function toggleLeadKeep(id) {
+  const user = getCurrentUser();
+  const data = getData();
+  const lead = data.leadStudents.find(item => item.id === id);
+  if (!lead || !canEditLead(lead, user)) return;
+  lead.keep = !lead.keep;
   saveData(data);
   refreshCurrentSection();
-  showToast('已更新联系记录。', 'success');
+  showToast(lead.keep ? '已标记为保留。' : '已取消保留。', 'success');
+}
+
+function handleLeadWechat(id) {
+  const user = getCurrentUser();
+  const data = getData();
+  const lead = data.leadStudents.find(item => item.id === id);
+  if (!lead || !canEditLead(lead, user)) return;
+  const phone = normalizePhone(lead.phone);
+  if (!phone) {
+    showToast('该线索未填写电话号码。', 'error');
+    return;
+  }
+  const copyPromise = navigator.clipboard?.writeText
+    ? navigator.clipboard.writeText(phone)
+    : Promise.reject();
+  copyPromise.then(() => {
+    lead.wechatAdded = true;
+    saveData(data);
+    refreshCurrentSection();
+    showNotice('已复制号码', '已将号码复制到剪贴板，请打开微信添加好友并粘贴搜索。');
+  }).catch(() => {
+    showNotice('复制失败', `请手动复制号码：${phone}`);
+  });
+}
+
+async function toggleLeadFavorite(id) {
+  const user = getCurrentUser();
+  const data = getData();
+  const lead = data.leadStudents.find(item => item.id === id);
+  if (!lead || !canEditLead(lead, user)) return;
+
+  if (lead.favorite) {
+    const confirmed = await showConfirm({
+      title: '取消收藏',
+      description: '确认取消该号码收藏吗？取消后昵称与备注会保留，但不再标记为收藏。',
+      confirmText: '确认取消',
+    });
+    if (!confirmed) return;
+    lead.favorite = false;
+    saveData(data);
+    refreshCurrentSection();
+    showToast('已取消收藏。', 'success');
+    return;
+  }
+
+  showModal({
+    title: '收藏设置',
+    description: '可设置昵称与备注，方便后续管理。',
+    fields: [
+      { name: 'nickname', label: '昵称', value: lead.nickname || lead.name || '', placeholder: '可选' , required: false },
+      { name: 'note', label: '备注', type: 'textarea', value: lead.note || '', placeholder: '可选', rows: 3, required: false },
+    ],
+    submitText: '确认收藏',
+    onSubmit: values => {
+      lead.favorite = true;
+      lead.nickname = values.nickname;
+      lead.note = values.note;
+      saveData(data);
+      refreshCurrentSection();
+      showToast('已收藏。', 'success');
+      return true;
+    },
+  });
+}
+
+function showLeadTextImport() {
+  showModal({
+    title: '文本批量导入',
+    description: '支持复制粘贴号码列表，系统会自动识别手机号/电话并去重导入。',
+    fields: [
+      { name: 'content', label: '号码文本', type: 'textarea', placeholder: '每行一个号码，或用空格/逗号分隔', rows: 6 },
+    ],
+    submitText: '开始导入',
+    onSubmit: values => {
+      const phones = extractPhonesFromText(values.content);
+      if (!phones.length) {
+        showToast('未识别到有效号码，请检查格式。', 'error');
+        return false;
+      }
+      importPhonesToLeads(phones, { keep: true, wechatAdded: false });
+      return true;
+    },
+  });
+}
+
+function showLeadImageImport() {
+  const tesseract = window.Tesseract;
+  if (!tesseract?.recognize) {
+    showNotice('图片导入', '当前未加载号码识别组件，请刷新页面后重试。');
+    return;
+  }
+
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.addEventListener('change', async () => {
+    const file = input.files?.[0];
+    if (!file) return;
+    showToast('正在识别图片中的号码，请稍候…', 'info');
+    try {
+      const result = await tesseract.recognize(file, 'chi_sim+eng');
+      const phones = extractPhonesFromText(result?.data?.text || '');
+      if (!phones.length) {
+        showToast('未识别到有效号码，请更换清晰图片或手动文本导入。', 'error');
+        return;
+      }
+      importPhonesToLeads(phones, { keep: true, wechatAdded: false });
+    } catch {
+      showToast('图片识别失败，请稍后重试或改用文本导入。', 'error');
+    }
+  });
+  input.click();
+}
+
+function showLeadWechatImport() {
+  showModal({
+    title: '微信批量导入',
+    description: '从微信聊天记录/备注中复制内容粘贴到这里，系统会自动识别号码并去重导入。',
+    fields: [
+      { name: 'content', label: '微信内容', type: 'textarea', placeholder: '粘贴微信聊天内容或号码列表', rows: 6 },
+    ],
+    submitText: '开始导入',
+    onSubmit: values => {
+      const phones = extractPhonesFromText(values.content);
+      if (!phones.length) {
+        showToast('未识别到有效号码，请检查粘贴内容。', 'error');
+        return false;
+      }
+      importPhonesToLeads(phones, { keep: true, wechatAdded: false });
+      return true;
+    },
+  });
 }
 
 function renderNotificationList(category) {
@@ -2345,7 +2937,10 @@ function showDashboard() {
   dashboard.classList.remove('hidden');
   dashboard.classList.remove('nav-open');
   topbar.classList.remove('hidden');
-  userStatus.textContent = `当前身份：${formatRoleLabel(user.role)} · ${user.username}`;
+  const identityText = user.username || user.phone || user.id;
+  const nameText = user.name ? `${user.name}${identityText ? ` · ${identityText}` : ''}` : identityText;
+  const approvalText = user.role === 'teacher' && !user.approved ? '（待审核）' : '';
+  userStatus.textContent = `当前身份：${formatRoleLabel(user.role)}${approvalText} · ${nameText}`;
   userStatus.classList.remove('hidden');
 
   renderTabs();
@@ -2375,40 +2970,216 @@ function logout(showMessage = false) {
   if (showMessage) showToast('已退出登录。', 'info');
 }
 
-function fillDemoCredentials(username, password, message) {
-  usernameInput.value = username;
-  passwordInput.value = password;
-  usernameInput.focus();
-  showToast(message, 'success');
+function isStrongPassword(value) {
+  const text = String(value || '');
+  if (text.length < 8) return false;
+  const hasLetter = /[A-Za-z]/.test(text);
+  const hasDigit = /\d/.test(text);
+  return hasLetter && hasDigit;
+}
+
+async function openRegisterFlow({ phone = '' } = {}) {
+  const normalizedPhone = String(phone || '').trim();
+  showModal({
+    title: '注册账号',
+    description: '首次使用需先完成注册；招生老师注册后需审核通过方可进入工作台。',
+    fields: [
+      {
+        name: 'type',
+        label: '身份类型',
+        options: [
+          { value: 'teacher', label: '招生老师' },
+          { value: 'parent', label: '学生家长' },
+          { value: 'student', label: '学生' },
+        ],
+      },
+    ],
+    submitText: '下一步',
+    onSubmit: async ({ type }) => {
+      await openRegisterForm({ type, phone: normalizedPhone });
+      return true;
+    },
+  });
+}
+
+async function openRegisterForm({ type, phone }) {
+  let extraField = null;
+  if (type === 'teacher') {
+    const { teams } = await apiRequest('/api/meta/teams', { method: 'GET' });
+    if (!teams.length) {
+      showNotice('暂无法注册', '系统尚未配置“所属团队”。请联系超级管理员先创建团队后再注册。');
+      return;
+    }
+    extraField = {
+      name: 'teamId',
+      label: '所属团队',
+      options: teams.map(team => ({ value: team.id, label: team.name })),
+    };
+  } else {
+    const { teachers } = await apiRequest('/api/meta/teachers', { method: 'GET' });
+    if (!teachers.length) {
+      showNotice('暂无法注册', '系统尚未有可对接的招生老师账号，请联系管理员处理。');
+      return;
+    }
+    extraField = {
+      name: 'linkedTeacherId',
+      label: '对接教师',
+      options: teachers.map(teacher => ({
+        value: teacher.id,
+        label: `${teacher.name}${teacher.phone ? ` · ${teacher.phone}` : ''}`,
+      })),
+    };
+  }
+
+  showModal({
+    title: '完善注册信息',
+    description: '所有字段均为必填项。',
+    fields: [
+      { name: 'name', label: type === 'parent' ? '家长姓名' : (type === 'student' ? '学生姓名' : '姓名'), placeholder: '请输入真实姓名' },
+      {
+        name: 'phone',
+        label: type === 'parent' ? '家长手机号' : (type === 'student' ? '学生手机号' : '手机号'),
+        placeholder: '请输入手机号',
+        value: phone || '',
+        inputMode: 'tel',
+        autocomplete: 'tel',
+        validate: value => (String(value).replace(/\D/g, '').length >= 6 ? true : '请输入正确手机号。'),
+      },
+      ...(type === 'teacher'
+        ? [{ name: 'employeeNo', label: '工号', placeholder: '请输入工号' }]
+        : []),
+      ...(type === 'parent'
+        ? [{ name: 'studentName', label: '学生姓名', placeholder: '请输入学生姓名' }]
+        : []),
+      extraField,
+      {
+        name: 'password',
+        label: '登录密码',
+        type: 'password',
+        placeholder: '8位以上，包含字母和数字',
+        autocomplete: 'new-password',
+        validate: value => (isStrongPassword(value) ? true : '密码需 8 位以上且包含字母与数字。'),
+      },
+    ].filter(Boolean),
+    submitText: '提交注册',
+    onSubmit: async payload => {
+      try {
+        const result = await apiRequest('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({ ...payload, type }),
+        });
+        saveAuth(result.user);
+        ensureSeededStorage();
+        showDashboard();
+        if (result.user.type === 'teacher' && !result.user.approved) {
+          showNotice('注册成功', '你的账号已提交审核，请等待团队负责人或超级管理员审核通过后进入工作台。');
+        } else {
+          showToast('注册成功，已登录系统。', 'success');
+        }
+        return true;
+      } catch (error) {
+        if (error.code === 'PHONE_EXISTS') {
+          showToast('该手机号已注册，请直接登录。', 'error');
+          return false;
+        }
+        if (error.code === 'WEAK_PASSWORD') {
+          showToast('密码强度不足，请按要求设置。', 'error');
+          return false;
+        }
+        showToast('注册失败，请检查填写信息或稍后重试。', 'error');
+        return false;
+      }
+    },
+  });
 }
 
 function ensureSeededStorage() {
-  if (localStorage.getItem(dataVersionKey) !== currentDataVersion) {
-    saveData(cloneInitialData());
-    localStorage.setItem(dataVersionKey, currentDataVersion);
+  const user = getCurrentUser();
+  const storageKey = getStorageKey(user);
+  const versionKey = `${dataVersionKey}_${user?.id || user?.username || 'public'}`;
+  if (localStorage.getItem(versionKey) !== currentDataVersion) {
+    localStorage.setItem(versionKey, currentDataVersion);
+    localStorage.setItem(storageKey, JSON.stringify(repairData(cloneInitialData())));
     return;
   }
   if (!localStorage.getItem(storageKey)) {
-    saveData(cloneInitialData());
+    localStorage.setItem(storageKey, JSON.stringify(repairData(cloneInitialData())));
     return;
   }
   saveData(getData());
 }
 
-function handleLogin(event) {
+async function handleLogin(event) {
   event.preventDefault();
-  const username = usernameInput.value.trim();
+  const identifier = usernameInput.value.trim();
   const password = passwordInput.value.trim();
-  const user = authUsers.find(entry => entry.username === username && entry.password === password);
-
-  if (!user) {
-    showToast('登录失败，请输入正确的演示账号和密码。', 'error');
-    return;
+  try {
+    const payload = await apiRequest('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ identifier, password }),
+    });
+    saveAuth(payload.user);
+    ensureSeededStorage();
+    showDashboard();
+    showToast(`欢迎回来，${formatRoleLabel(getCurrentUser().role)}。`, 'success');
+  } catch (error) {
+    if (error.code === 'USER_NOT_FOUND') {
+      showToast('账号不存在，请先完成注册。', 'error');
+      openRegisterFlow({ phone: identifier });
+      return;
+    }
+    if (error.code === 'INVALID_CREDENTIALS') {
+      showToast('账号或密码错误，请重试。', 'error');
+      return;
+    }
+    showToast('登录失败，请检查网络或稍后重试。', 'error');
   }
+}
 
-  saveAuth(user);
-  showDashboard();
-  showToast(`欢迎回来，${formatRoleLabel(user.role)}。`, 'success');
+function extractPhonesFromText(content) {
+  const matches = String(content || '').match(/\+?\d[\d\s\-()]{5,}\d/g) || [];
+  const phones = [...new Set(matches.map(item => normalizePhone(item)).filter(item => isValidPhone(item)))];
+  return phones;
+}
+
+function importPhonesToLeads(phones, { keep = true, wechatAdded = false } = {}) {
+  const user = getCurrentUser();
+  const data = getData();
+  const existingSet = new Set(data.leadStudents.filter(lead => lead.createdBy === user.id).map(lead => normalizePhone(lead.phone)));
+  let created = 0;
+
+  phones.forEach(phone => {
+    if (existingSet.has(phone)) return;
+    existingSet.add(phone);
+    data.leadStudents.push({
+      id: generateId(),
+      name: phone,
+      grade: '',
+      parent: '',
+      phone,
+      called: false,
+      callOutcome: '',
+      followUp: '',
+      assignedTeacherId: 0,
+      assignedTeacher: user.name || user.phone || '本人',
+      enrollmentStatus: '待跟进',
+      teamId: Number(user.teamId) || 0,
+      priority: '中',
+      lastContactTime: '',
+      createdBy: user.id,
+      favorite: false,
+      nickname: '',
+      note: '',
+      wechatAdded,
+      keep,
+    });
+    created += 1;
+  });
+
+  saveData(data);
+  refreshCurrentSection();
+  showToast(`已导入 ${created} 个号码。`, 'success');
+  return created;
 }
 
 function handleSectionClick(event) {
@@ -2417,6 +3188,16 @@ function handleSectionClick(event) {
 
   if (button.dataset.switchSection) return setActiveSection(button.dataset.switchSection);
   if (button.dataset.openNotifications !== undefined) return openNotificationModal();
+  if (button.dataset.editProfile !== undefined) return showProfileEditForm();
+  if (button.dataset.changePassword !== undefined) return showPasswordChangeForm();
+  if (button.dataset.addBackendTeam !== undefined) return showBackendTeamForm();
+  if (button.dataset.refreshAccounts !== undefined) return loadAccountsSection();
+  if (button.dataset.deleteBackendTeam) return deleteBackendTeam(String(button.dataset.deleteBackendTeam));
+  if (button.dataset.approveTeacher) return approveTeacher(String(button.dataset.approveTeacher), true);
+  if (button.dataset.rejectTeacher) return approveTeacher(String(button.dataset.rejectTeacher), false);
+  if (button.dataset.toggleTeamLead) {
+    return toggleTeamLead(String(button.dataset.toggleTeamLead), button.dataset.teamLead === '1');
+  }
   if (button.dataset.addTeam !== undefined) return showTeamForm();
   if (button.dataset.editTeam) return showTeamForm(Number(button.dataset.editTeam));
   if (button.dataset.deleteTeam) return deleteTeam(Number(button.dataset.deleteTeam));
@@ -2428,9 +3209,15 @@ function handleSectionClick(event) {
   if (button.dataset.deleteSchool) return deleteSchool(Number(button.dataset.deleteSchool));
   if (button.dataset.showLeadImportHelp !== undefined) return showLeadImportGuide();
   if (button.dataset.importLeads !== undefined) return triggerLeadImport();
+  if (button.dataset.importLeadsText !== undefined) return showLeadTextImport();
+  if (button.dataset.importLeadsImage !== undefined) return showLeadImageImport();
+  if (button.dataset.importLeadsWechat !== undefined) return showLeadWechatImport();
   if (button.dataset.addLead !== undefined) return showLeadForm();
   if (button.dataset.editLead) return showLeadForm(Number(button.dataset.editLead));
   if (button.dataset.callLead) return markLeadCalled(Number(button.dataset.callLead));
+  if (button.dataset.favoriteLead) return toggleLeadFavorite(Number(button.dataset.favoriteLead));
+  if (button.dataset.wechatLead) return handleLeadWechat(Number(button.dataset.wechatLead));
+  if (button.dataset.keepLead) return toggleLeadKeep(Number(button.dataset.keepLead));
   if (button.dataset.deleteLead) return deleteLead(Number(button.dataset.deleteLead));
   if (button.dataset.addConnection !== undefined) return showConnectionForm();
   if (button.dataset.editConnection) return showConnectionForm(Number(button.dataset.editConnection));
@@ -2444,15 +3231,19 @@ function handleFilterInput(event) {
   renderSection(filterSection);
 }
 
-function init() {
-  ensureSeededStorage();
+async function init() {
   updateGreeting();
   updateNotificationButton();
   updateWorkspaceSummary(uiState.activeSection);
   updateDeviceStatus();
 
   loginForm.addEventListener('submit', handleLogin);
-  logoutButton?.addEventListener('click', () => logout(true));
+  logoutButton?.addEventListener('click', async () => {
+    try {
+      await apiRequest('/api/auth/logout', { method: 'POST' });
+    } catch {}
+    logout(true);
+  });
   switchAccountBtn?.addEventListener('click', () => {
     logout(false);
     usernameInput.value = '';
@@ -2496,31 +3287,21 @@ function init() {
   });
   window.addEventListener('resize', updateDeviceStatus);
 
-  demoWechatBtn?.addEventListener('click', () => {
-    fillDemoCredentials('lead_green', 'team2026', '已填充团队负责人演示账号。');
-  });
-  demoSmsBtn?.addEventListener('click', () => {
-    fillDemoCredentials('member_lina', 'team2026', '已填充招生老师演示账号。');
-  });
-  demoAccountButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      fillDemoCredentials(button.dataset.demoUser, button.dataset.demoPassword, `已填充 ${button.textContent.trim()} 账号。`);
-    });
-  });
-
   forgotPasswordLink?.addEventListener('click', event => {
     event.preventDefault();
-    showNotice('找回密码', '当前为静态演示环境，建议直接使用页面内提供的演示账号体验系统。');
+    showNotice('找回密码', '请联系超级管理员重置密码。');
   });
   registerLink?.addEventListener('click', event => {
     event.preventDefault();
-    showNotice('申请开通', '如需开通正式账号，可在真实业务系统中接入后端注册审批流程。当前演示版仅提供体验账号。');
+    openRegisterFlow({});
   });
 
-  const auth = getAuth();
-  if (auth) {
+  try {
+    const payload = await apiRequest('/api/me', { method: 'GET' });
+    saveAuth(payload.user);
+    ensureSeededStorage();
     showDashboard();
-  }
+  } catch {}
 }
 
 init();
