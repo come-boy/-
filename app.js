@@ -1331,7 +1331,6 @@ function renderProfileSection(user) {
     <div class="stats-grid compact-grid">
       <div class="stats-card"><h3>姓名</h3><p>${escapeHTML(user.name || '未设置')}</p></div>
       <div class="stats-card"><h3>手机号</h3><p>${escapeHTML(user.phone || '未设置')}</p></div>
-      <div class="stats-card"><h3>工号</h3><p>${escapeHTML(user.employeeNo || '未设置')}</p></div>
       <div class="stats-card"><h3>身份类型</h3><p>${escapeHTML(formatRoleLabel(user.role))}</p></div>
     </div>
   `;
@@ -1348,7 +1347,6 @@ function renderProfileSection(user) {
       <div class="list">
         ${renderListRow('姓名', user.name || '未设置')}
         ${renderListRow('手机号', user.phone || '未设置')}
-        ${renderListRow('工号', user.employeeNo || '未设置')}
       </div>
     </div>
   `;
@@ -1452,13 +1450,12 @@ async function loadAccountsSection() {
 
     pendingPanel.querySelector('.table-card').innerHTML = pending.length ? `
       <table>
-        <thead><tr><th>姓名</th><th>手机号</th><th>工号</th><th>团队</th><th>操作</th></tr></thead>
+        <thead><tr><th>姓名</th><th>手机号</th><th>团队</th><th>操作</th></tr></thead>
         <tbody>
           ${pending.map(item => `
             <tr>
               <td data-label="姓名">${escapeHTML(item.name)}</td>
               <td data-label="手机号">${escapeHTML(item.phone)}</td>
-              <td data-label="工号">${escapeHTML(item.employeeNo)}</td>
               <td data-label="团队">${escapeHTML(getTeamNameById(item.teamId, teams))}</td>
               <td data-label="操作">${renderActionButtons([
                 `<button type="button" class="text-button" data-approve-teacher="${item.id}">通过</button>`,
@@ -1507,7 +1504,6 @@ function showProfileEditForm() {
     description: '修改后会以最新信息显示。',
     fields: [
       { name: 'name', label: '姓名', value: user.name || '', placeholder: '请输入姓名' },
-      { name: 'employeeNo', label: '工号', value: user.employeeNo || '', placeholder: '请输入工号' },
     ],
     submitText: '保存修改',
     onSubmit: async payload => {
@@ -3012,7 +3008,7 @@ async function openRegisterForm({ type, phone }) {
     }
     extraField = {
       name: 'teamId',
-      label: '所属团队',
+      label: '所属招生团队',
       options: teams.map(team => ({ value: team.id, label: team.name })),
     };
   } else {
@@ -3023,7 +3019,7 @@ async function openRegisterForm({ type, phone }) {
     }
     extraField = {
       name: 'linkedTeacherId',
-      label: '对接教师',
+      label: '对接招生老师',
       options: teachers.map(teacher => ({
         value: teacher.id,
         label: `${teacher.name}${teacher.phone ? ` · ${teacher.phone}` : ''}`,
@@ -3035,22 +3031,16 @@ async function openRegisterForm({ type, phone }) {
     title: '完善注册信息',
     description: '所有字段均为必填项。',
     fields: [
-      { name: 'name', label: type === 'parent' ? '家长姓名' : (type === 'student' ? '学生姓名' : '姓名'), placeholder: '请输入真实姓名' },
+      { name: 'name', label: '姓名', placeholder: '请输入真实姓名' },
       {
         name: 'phone',
-        label: type === 'parent' ? '家长手机号' : (type === 'student' ? '学生手机号' : '手机号'),
+        label: '手机号',
         placeholder: '请输入手机号',
         value: phone || '',
         inputMode: 'tel',
         autocomplete: 'tel',
         validate: value => (String(value).replace(/\D/g, '').length >= 6 ? true : '请输入正确手机号。'),
       },
-      ...(type === 'teacher'
-        ? [{ name: 'employeeNo', label: '工号', placeholder: '请输入工号' }]
-        : []),
-      ...(type === 'parent'
-        ? [{ name: 'studentName', label: '学生姓名', placeholder: '请输入学生姓名' }]
-        : []),
       extraField,
       {
         name: 'password',

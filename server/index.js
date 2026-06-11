@@ -29,7 +29,7 @@ function loadDotEnv() {
 
 loadDotEnv();
 
-const superUsername = process.env.SUPERADMIN_USERNAME || '吴老师';
+const superUsername = '吴老师';
 const superPassword = process.env.SUPERADMIN_PASSWORD;
 const sessionSecret = process.env.SESSION_SECRET;
 
@@ -157,11 +157,9 @@ app.get('/api/me', requireLogin, (req, res) => {
 app.patch('/api/me', requireLogin, (req, res) => {
   const user = req.user;
   const name = req.body?.name !== undefined ? String(req.body.name || '').trim() : null;
-  const employeeNo = req.body?.employeeNo !== undefined ? String(req.body.employeeNo || '').trim() : null;
   const password = req.body?.password !== undefined ? String(req.body.password || '').trim() : null;
 
   if (name !== null && !name) return res.status(400).json({ ok: false, code: 'INVALID_NAME' });
-  if (employeeNo !== null && !employeeNo) return res.status(400).json({ ok: false, code: 'INVALID_EMPLOYEE_NO' });
   if (password !== null && !isStrongPassword(password)) return res.status(400).json({ ok: false, code: 'WEAK_PASSWORD' });
 
   const users = getUsers();
@@ -169,7 +167,6 @@ app.patch('/api/me', requireLogin, (req, res) => {
   if (!target) return res.status(404).json({ ok: false, code: 'USER_NOT_FOUND' });
 
   if (name !== null) target.name = name;
-  if (employeeNo !== null) target.employeeNo = employeeNo;
   if (password !== null) {
     const { salt, hash } = hashPassword(password);
     target.passwordSalt = salt;
@@ -219,8 +216,6 @@ app.post('/api/auth/register', (req, res) => {
   const type = String(req.body?.type || '').trim();
   const name = String(req.body?.name || '').trim();
   const phone = String(req.body?.phone || '').trim();
-  const employeeNo = String(req.body?.employeeNo || '').trim();
-  const studentName = String(req.body?.studentName || '').trim();
   const password = String(req.body?.password || '').trim();
   const teamId = req.body?.teamId !== undefined ? Number(req.body.teamId) : NaN;
   const linkedTeacherId = String(req.body?.linkedTeacherId || '').trim();
@@ -230,12 +225,6 @@ app.post('/api/auth/register', (req, res) => {
   }
   if (!name || !phone || !password) {
     return res.status(400).json({ ok: false, code: 'MISSING_FIELDS' });
-  }
-  if (type === 'teacher' && !employeeNo) {
-    return res.status(400).json({ ok: false, code: 'MISSING_EMPLOYEE_NO' });
-  }
-  if (type === 'parent' && !studentName) {
-    return res.status(400).json({ ok: false, code: 'MISSING_STUDENT_NAME' });
   }
   if (!/^\d{6,}$/.test(phone.replace(/\D/g, ''))) {
     return res.status(400).json({ ok: false, code: 'INVALID_PHONE' });
@@ -269,8 +258,8 @@ app.post('/api/auth/register', (req, res) => {
     username: '',
     phone,
     name,
-    employeeNo: type === 'teacher' ? employeeNo : '',
-    studentName: type === 'parent' ? studentName : '',
+    employeeNo: '',
+    studentName: '',
     teamId: type === 'teacher' ? teamId : null,
     linkedTeacherId: type !== 'teacher' ? linkedTeacherId : '',
     approved: type !== 'teacher',
